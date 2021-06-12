@@ -28,10 +28,9 @@ MongoClient.connect('mongodb://127.0.0.1:27017', (err, client) => {
 
   console.log('Connected');
 
-  app.get('/song/*', (req, res) => {
+  app.get('/song/:id', (req, res) => {
     console.log('GET song');
-    let id = req.originalUrl.replace('/song/', '');
-    console.log(id)
+    let id = req.params.id;
 
     songs.findOne({ _id: new mongo.ObjectID(id) })
       .then(song => {console.log(song); res.send(song)} )
@@ -51,11 +50,81 @@ MongoClient.connect('mongodb://127.0.0.1:27017', (err, client) => {
 
   app.post('/createSong', (req, res) => {
     console.log('POST createSong');
-    console.log(req.body);
+    
 
     songs.insertOne(req.body)
       .then(result => res.send(result.insertedId))
       .catch(error => console.error(error))
+  });
+
+
+
+  app.patch('/song/:id/updateTitle', (req, res) => {
+    console.log('PATCH song updateTitle');
+
+    let patch = { id: req.params.id, title: req.body.title };
+    console.log(patch);
+
+    songs.updateOne(
+      { _id: new mongo.ObjectID(patch.id) },
+      { $set: {title: patch.title} }
+    )
+      .then(result => res.send(patch))
+      .catch(error => console.error(error));
+  });
+
+
+  app.patch('/song/:id/update/:type', (req, res) => {
+    let type = req.params.type;
+    console.log('PATCH song update ' + type);
+
+    let id = req.params.id;
+    let patch = req.body.data;
+
+    console.log(patch);
+
+    songs.updateOne(
+      { _id: new mongo.ObjectID(id) },
+      { $set: {[type]: patch} }
+    )
+      .then(result => res.send({id: id, type: type, data: patch}))
+      .catch(error => console.error(error));
+  });
+
+  app.patch('/song/:id/update/section/add', (req, res) => {
+    console.log('PATCH song add section');
+
+    let id = req.params.id;
+    let patch = req.body.data;
+
+    console.log(patch);
+
+    songs.updateOne(
+      { _id: new mongo.ObjectID(id) },
+      { $push: {sections: patch} }
+    )
+      .then(result => res.send({id: id, data: patch}))
+      .catch(error => console.error(error));
+  });
+
+  app.patch('/song/:id/update/section/:i/:type', (req, res) => {
+    let type = req.params.type;
+    let i = req.params.i;
+    console.log('PATCH song update section ' + type);
+
+    let id = req.params.id;
+    let patch = req.body.data;
+
+    let section = `sections.${i}.${type}`;
+
+    console.log(patch);
+
+    songs.updateOne(
+      { _id: new mongo.ObjectID(id) },
+      { $set: {[section]: patch} }
+    )
+      .then(result => res.send({id: id, type: type, data: patch}))
+      .catch(error => console.error(error));
   });
   
 
