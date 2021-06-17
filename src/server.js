@@ -57,6 +57,16 @@ MongoClient.connect('mongodb://127.0.0.1:27017', (err, client) => {
       .catch(error => console.error(error))
   });
 
+  app.delete('/deleteSong/:id', (req, res) => {
+    let id = req.params.id;
+    console.log('POST deleteSong ' + id);
+    
+
+    songs.deleteOne({ _id: new mongo.ObjectID(id) })
+      .then(result => res.send(id))
+      .catch(error => console.error(error))
+  });
+
 
 
   app.patch('/song/:id/updateTitle', (req, res) => {
@@ -107,6 +117,31 @@ MongoClient.connect('mongodb://127.0.0.1:27017', (err, client) => {
       .catch(error => console.error(error));
   });
 
+  app.patch('/song/:id/update/section/delete/:i', (req, res) => {
+    console.log('PATCH song delete section');
+
+    let id = req.params.id;
+    let i = req.body.i;
+
+    let section = `sections.${i}`;
+
+    let remove = 'UNIQUE VALUE TO BE DELETED';
+
+    console.log(i);
+
+    songs.updateMany(
+      { _id: new mongo.ObjectID(id) },
+      { $unset: { [section]: 1 } }
+    ) .then(() =>
+    
+    songs.updateMany(
+      { _id: new mongo.ObjectID(id) },
+      { $pull: {sections: null} }
+    )
+      .then(result => res.send({id: id, data: i}))
+      .catch(error => console.error(error)))
+  });
+
   app.patch('/song/:id/update/section/:i/:type', (req, res) => {
     let type = req.params.type;
     let i = req.params.i;
@@ -123,7 +158,7 @@ MongoClient.connect('mongodb://127.0.0.1:27017', (err, client) => {
       { _id: new mongo.ObjectID(id) },
       { $set: {[section]: patch} }
     )
-      .then(result => res.send({id: id, type: type, data: patch}))
+      .then(result => res.send({id: id, i: i, type: type, data: patch}))
       .catch(error => console.error(error));
   });
   
