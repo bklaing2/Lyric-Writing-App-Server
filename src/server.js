@@ -3,7 +3,7 @@
 
 const express = require('express');
 const cors = require('cors');
-const bodyParser= require('body-parser');
+const bodyParser = require('body-parser');
 const mongo = require('mongodb');
 const MongoClient = require('mongodb').MongoClient;
 // const mongoose = require('mongoose');
@@ -23,35 +23,14 @@ app.use(bodyParser.json())
 MongoClient.connect('mongodb://127.0.0.1:27017', (err, client) => {
   if (err) return console.log(err)
 
+  // Connect to database
   const db = client.db('lyric-writing-app');
   const songs = db.collection('songs');
 
-  console.log('Connected');
-
-  app.get('/song/:id', (req, res) => {
-    console.log('GET song');
-    let id = req.params.id;
-
-    songs.findOne({ _id: new mongo.ObjectID(id) })
-      .then(song => {console.log(song); res.send(song)} )
-      .catch(error => console.error(error))
-    // console.log(res);
-  })
 
 
-  app.get('/songs', (req, res) => {
-    console.log('GET songs');
-
-    songs.find({}, { projection: { title: true } } ).toArray()
-      .then(songs => res.send(songs))
-      .catch(error => console.error(error))
-  });
-
-
+  // Song functions
   app.post('/createSong', (req, res) => {
-    console.log('POST createSong');
-    
-
     songs.insertOne(req.body)
       .then(result => res.send(result.insertedId))
       .catch(error => console.error(error))
@@ -59,39 +38,34 @@ MongoClient.connect('mongodb://127.0.0.1:27017', (err, client) => {
 
   app.delete('/deleteSong/:id', (req, res) => {
     let id = req.params.id;
-    console.log('POST deleteSong ' + id);
     
-
     songs.deleteOne({ _id: new mongo.ObjectID(id) })
       .then(result => res.send(id))
       .catch(error => console.error(error))
   });
 
+  app.get('/song/:id', (req, res) => {
+    let id = req.params.id;
 
-
-  app.patch('/song/:id/updateTitle', (req, res) => {
-    console.log('PATCH song updateTitle');
-
-    let patch = { id: req.params.id, title: req.body.title };
-    console.log(patch);
-
-    songs.updateOne(
-      { _id: new mongo.ObjectID(patch.id) },
-      { $set: {title: patch.title} }
-    )
-      .then(result => res.send(patch))
-      .catch(error => console.error(error));
+    songs.findOne({ _id: new mongo.ObjectID(id) })
+      .then(song => {console.log(song); res.send(song)} )
+      .catch(error => console.error(error))
   });
 
 
+  app.get('/songs', (req, res) => {
+    songs.find({}, { projection: { title: true } } ).toArray()
+      .then(songs => res.send(songs))
+      .catch(error => console.error(error))
+  });
+
+
+
+  // Edit song functions
   app.patch('/song/:id/update/:type', (req, res) => {
     let type = req.params.type;
-    console.log('PATCH song update ' + type);
-
     let id = req.params.id;
     let patch = req.body.data;
-
-    console.log(patch);
 
     songs.updateOne(
       { _id: new mongo.ObjectID(id) },
@@ -101,13 +75,10 @@ MongoClient.connect('mongodb://127.0.0.1:27017', (err, client) => {
       .catch(error => console.error(error));
   });
 
-  app.patch('/song/:id/update/section/add', (req, res) => {
-    console.log('PATCH song add section');
 
+  app.patch('/song/:id/update/section/add', (req, res) => {
     let id = req.params.id;
     let patch = req.body.data;
-
-    console.log(patch);
 
     songs.updateOne(
       { _id: new mongo.ObjectID(id) },
@@ -118,16 +89,9 @@ MongoClient.connect('mongodb://127.0.0.1:27017', (err, client) => {
   });
 
   app.patch('/song/:id/update/section/delete/:i', (req, res) => {
-    console.log('PATCH song delete section');
-
     let id = req.params.id;
     let i = req.body.i;
-
     let section = `sections.${i}`;
-
-    let remove = 'UNIQUE VALUE TO BE DELETED';
-
-    console.log(i);
 
     songs.updateMany(
       { _id: new mongo.ObjectID(id) },
@@ -145,14 +109,9 @@ MongoClient.connect('mongodb://127.0.0.1:27017', (err, client) => {
   app.patch('/song/:id/update/section/:i/:type', (req, res) => {
     let type = req.params.type;
     let i = req.params.i;
-    console.log('PATCH song update section ' + type);
-
     let id = req.params.id;
     let patch = req.body.data;
-
     let section = `sections.${i}.${type}`;
-
-    console.log(patch);
 
     songs.updateOne(
       { _id: new mongo.ObjectID(id) },
